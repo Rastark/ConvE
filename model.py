@@ -128,8 +128,8 @@ class ConvE(torch.nn.Module):
 
 class InteractE(torch.nn.Module):
     def __init__(self, args, num_entities, num_relations,
-                 k_h: int = 20,
-                 k_w: int = 10,
+                 k_h: int = 10,
+                 k_w: int = 5,
                  num_perm: int = 1,
                  inp_drop_p: float = 0.2,
                  hid_drop_p: float = 0.5,
