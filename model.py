@@ -128,7 +128,6 @@ class ConvE(torch.nn.Module):
 
 class InteractE(torch.nn.Module):
     def __init__(self, args, num_entities, num_relations,
-                 embed_dim: int,
                  k_h: int = 20,
                  k_w: int = 10,
                  num_perm: int = 1,
@@ -165,10 +164,10 @@ class InteractE(torch.nn.Module):
         self.flat_sz = flat_sz_h * flat_sz_w * num_filt_conv * self.num_perm
 
         # Normalization
-        self.bn2 = nn.BatchNorm1d(self.embed_dim)
+        self.bn2 = nn.BatchNorm1d(args.embedding_dim)
 
         # Matrix flattening
-        self.fc = nn.Linear(self.flat_sz, self.embed_dim)
+        self.fc = nn.Linear(self.flat_sz, args.embedding_dim)
         
         # Chequered permutation
         self.chequer_perm = Permutator(num_perm=self.num_perm, mtx_h=k_h, mtx_w=k_w).chequer_perm()
