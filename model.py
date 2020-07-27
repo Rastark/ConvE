@@ -127,7 +127,7 @@ class ConvE(torch.nn.Module):
 # Add your own model here
 
 class InteractE(torch.nn.Module):
-    def __init__(self, num_entities, num_relations,
+    def __init__(self, args, num_entities, num_relations,
                  embed_dim: int,
                  k_h: int = 20,
                  k_w: int = 10,
@@ -140,8 +140,9 @@ class InteractE(torch.nn.Module):
                 #  strategy: str = 'one_to_n',
                  neg_num: int = 0,
                  init_random = True):
-        self.entity_embeddings = torch.nn.Embedding(num_entities, embed_dim, padding_idx=0)
-        self.relation_embeddings = torch.nn.Embedding(num_relations, embed_dim, padding_idx=0)
+        super(InteractE, self).__init__()
+        self.entity_embeddings = torch.nn.Embedding(num_entities, args.embedding_dim, padding_idx=0)
+        self.relation_embeddings = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
         self.loss = torch.nn.BCELoss()
 
         # Dropout regularization for input layer, hidden layer and embedding matrix
