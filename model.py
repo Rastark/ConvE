@@ -197,6 +197,7 @@ class InteractE(torch.nn.Module):
         rel_emb	= self.relation_embeddings(rel)	# Embeds the relationship tensor
         
         comb_emb = torch.cat([sub_emb, rel_emb], dim=1)
+        print('comb_emb', comb_emb)
         # self to access local variable.
         matrix_chequer_perm = comb_emb[:, self.chequer_perm]
         print('matrix: ', matrix_chequer_perm)
