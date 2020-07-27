@@ -42,7 +42,9 @@ class Permutator(nn.Module):
         """
         # ent_perms and rel_perms are lists of permutations
         ent_perms = np.int32([np.random.permutation(self.embed_dim) for _ in range(self.num_perm)])
+        print('ent_perms:', ent_perms.shape)
         rel_perms = np.int32([np.random.permutation(self.embed_dim) for _ in range(self.num_perm)])
+        print('rel_perms:', rel_perms.shape)
 
         comb_idx = [] # matrix of size k x 
         for k in range(self.num_perm): 
@@ -79,5 +81,6 @@ class Permutator(nn.Module):
 
             comb_idx.append(temp)
 
+        print('comb_idx:', comb_idx.shape)
         chequer_perm = torch.LongTensor(np.int32(comb_idx)).to(self.device)
         return chequer_perm
