@@ -2,10 +2,10 @@ import torch
 from torch.nn import functional as F, Parameter
 from torch.autograd import Variable
 
-
+from torch import nn
 from torch.nn.init import xavier_normal_, xavier_uniform_
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-
+from permutator import Permutator
 
 
 class Complex(torch.nn.Module):
