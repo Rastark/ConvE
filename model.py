@@ -141,6 +141,8 @@ class InteractE(torch.nn.Module):
                  init_random = True):
         super(InteractE, self).__init__()
         
+        self.num_entities = num_entities
+        self.num_relations = num_relations
         self.num_perm = num_perm					# number of permutation
         self.kernel_size = kernel_size
         
