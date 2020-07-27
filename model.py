@@ -140,6 +140,10 @@ class InteractE(torch.nn.Module):
                  neg_num: int = 0,
                  init_random = True):
         super(InteractE, self).__init__()
+        
+        self.num_perm = num_perm					# number of permutation
+        self.kernel_size = kernel_size
+        
         self.entity_embeddings = torch.nn.Embedding(num_entities, args.embedding_dim, padding_idx=0)
         self.relation_embeddings = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
         self.loss = torch.nn.BCELoss()
