@@ -187,8 +187,8 @@ class InteractE(torch.nn.Module):
         xavier_normal_(self.conv_filt)
 
     def init(self):
-        xavier_normal_(self.entity_embeddings.data)
-        xavier_normal_(self.relation_embeddings.data)
+        xavier_normal_(self.entity_embeddings.weight.data)
+        xavier_normal_(self.relation_embeddings.weight.data)
 
     def forward(self, e1, rel):
         e1_embedded= self.emb_e(e1)
