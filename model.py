@@ -191,8 +191,6 @@ class InteractE(torch.nn.Module):
         xavier_normal_(self.relation_embeddings.weight.data)
 
     def forward(self, e1, rel):
-        e1_embedded= self.emb_e(e1)
-        rel_embedded= self.emb_rel(rel)
 
         sub_emb	= self.entity_embeddings(e1)    # Embeds the subject tensor
         rel_emb	= self.relation_embeddings(rel)	# Embeds the relationship tensor
