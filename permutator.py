@@ -81,6 +81,6 @@ class Permutator(nn.Module):
 
             comb_idx.append(temp)
 
-        print('comb_idx:', comb_idx.shape)
+        print('comb_idx:', len(comb_idx))
         chequer_perm = torch.LongTensor(np.int32(comb_idx)).to(self.device)
         return chequer_perm
