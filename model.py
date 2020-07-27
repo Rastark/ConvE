@@ -126,28 +126,97 @@ class ConvE(torch.nn.Module):
 
 # Add your own model here
 
-class MyModel(torch.nn.Module):
-    def __init__(self, num_entities, num_relations):
-        super(DistMult, self).__init__()
-        self.emb_e = torch.nn.Embedding(num_entities, args.embedding_dim, padding_idx=0)
-        self.emb_rel = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
-        self.inp_drop = torch.nn.Dropout(args.input_drop)
+class InteractE(torch.nn.Module):
+    def __init__(self, num_entities, num_relations,
+                 embed_dim: int,
+                 k_h: int = 20,
+                 k_w: int = 10,
+                 num_perm: int = 1,
+                 inp_drop_p: float = 0.2,
+                 hid_drop_p: float = 0.5,
+                 feat_drop_p: float = 0.5,
+                 kernel_size: int = 9,
+                 num_filt_conv: int = 96,
+                #  strategy: str = 'one_to_n',
+                 neg_num: int = 0,
+                 init_random = True):
+        self.entity_embeddings = torch.nn.Embedding(num_entities, embed_dim, padding_idx=0)
+        self.relation_embeddings = torch.nn.Embedding(num_relations, embed_dim, padding_idx=0)
         self.loss = torch.nn.BCELoss()
 
+        # Dropout regularization for input layer, hidden layer and embedding matrix
+        self.inp_drop = nn.Dropout(inp_drop_p)
+        self.hidden_drop = nn.Dropout(hid_drop_p)
+        self.feature_map_drop = nn.Dropout2d(feat_drop_p)
+        # Embedding matrix normalization
+        self.bn0 = nn.BatchNorm2d(self.num_perm)
+
+        self.k_h = k_h
+        self.k_w = k_w
+        flat_sz_h = k_h
+        flat_sz_w = 2*k_w
+        self.padding = 0
+
+        # Conv layer normalization
+        self.bn1 = nn.BatchNorm2d(num_filt_conv * self.num_perm)
+        
+        # Flattened embedding matrix size
+        self.flat_sz = flat_sz_h * flat_sz_w * num_filt_conv * self.num_perm
+
+        # Normalization
+        self.bn2 = nn.BatchNorm1d(self.embed_dim)
+
+        # Matrix flattening
+        self.fc = nn.Linear(self.flat_sz, self.embed_dim)
+        
+        # Chequered permutation
+        self.chequer_perm = Permutator(num_perm=self.num_perm, mtx_h=k_h, mtx_w=k_w).chequer_perm()
+
+        # Bias definition
+        self.register_parameter('bias', Parameter(torch.zeros(self.num_entities)))
+
+        # Kernel filter definition
+        self.num_filt_conv = num_filt_conv
+        self.register_parameter('conv_filt', Parameter(torch.zeros(num_filt_conv, 1, kernel_size, kernel_size)))
+        xavier_normal_(self.conv_filt)
+
     def init(self):
-        xavier_normal_(self.emb_e.weight.data)
-        xavier_normal_(self.emb_rel.weight.data)
+        xavier_normal_(self.entity_embeddings.data)
+        xavier_normal_(self.relation_embeddings.data)
 
     def forward(self, e1, rel):
         e1_embedded= self.emb_e(e1)
         rel_embedded= self.emb_rel(rel)
 
-        # Add your model function here
-        # The model function should operate on the embeddings e1 and rel
-        # and output scores for all entities (you will need a projection layer
-        # with output size num_relations (from constructor above)
+        sub_emb	= self.entity_embeddings(e1)    # Embeds the subject tensor
+        rel_emb	= self.relation_embeddings(rel)	# Embeds the relationship tensor
+        
+        comb_emb = torch.cat([sub_emb, rel_emb], dim=1)
+        # self to access local variable.
+        matrix_chequer_perm = comb_emb[:, self.chequer_perm]
+        # matrix reshaped
+        stack_inp = matrix_chequer_perm.reshape((-1, self.num_perm, 2*self.k_w, self.k_h))
+        stack_inp = self.bn0(stack_inp)  # Normalizes
+        x = self.inp_drop(stack_inp)	# Regularizes with dropout
+        # Circular convolution
+        x = self.circular_padding_chw(x, self.kernel_size//2)	# Defines the kernel for the circular conv
+        x = F.conv2d(x, self.conv_filt.repeat(self.num_perm, 1, 1, 1), padding=self.padding, groups=self.num_perm) # Circular conv
+        x = self.bn1(x)	# Normalizes
+        x = F.relu(x)
+        x = self.feature_map_drop(x)	# Regularizes with dropout
+        x = x.view(-1, self.flat_sz)
+        x = self.fc(x)
+        x = self.hidden_drop(x)	# Regularizes with dropout
+        x = self.bn2(x)	# Normalizes
+        x = F.relu(x)
+        
+        # if self.strategy == 'one_to_n':
+        x = torch.mm(x, self.entity_embeddings.weight.transpose(1,0))
+        x += self.bias.expand_as(x)
+        # else:
+        #     x = torch.mul(x.unsqueeze(1), self.entity_embeddings[self.neg_num]).sum(dim=-1)
+        #     x += self.bias[self.neg_num]
 
-        # generate output scores here
-        prediction = torch.sigmoid(output)
+        prediction = torch.sigmoid(x)
 
         return prediction
