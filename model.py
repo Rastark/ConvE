@@ -154,14 +154,15 @@ class InteractE(torch.nn.Module):
         self.inp_drop = nn.Dropout(inp_drop_p)
         self.hidden_drop = nn.Dropout(hid_drop_p)
         self.feature_map_drop = nn.Dropout2d(feat_drop_p)
-        # Embedding matrix normalization
-        self.bn0 = nn.BatchNorm2d(self.num_perm)
 
         self.k_h = k_h
         self.k_w = k_w
         flat_sz_h = k_h
         flat_sz_w = 2*k_w
         self.padding = 0
+
+        # Embedding matrix normalization
+        self.bn0 = nn.BatchNorm2d(self.num_perm)
 
         # Conv layer normalization
         self.bn1 = nn.BatchNorm2d(num_filt_conv * self.num_perm)
@@ -198,8 +199,10 @@ class InteractE(torch.nn.Module):
         comb_emb = torch.cat([sub_emb, rel_emb], dim=1)
         # self to access local variable.
         matrix_chequer_perm = comb_emb[:, self.chequer_perm]
+        print('matrix: ', matrix_chequer_perm)
         # matrix reshaped
         stack_inp = matrix_chequer_perm.reshape((-1, self.num_perm, 2*self.k_w, self.k_h))
+        print('stacked:', stack_imp)
         stack_inp = self.bn0(stack_inp)  # Normalizes
         x = self.inp_drop(stack_inp)	# Regularizes with dropout
         # Circular convolution
